@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <typeinfo>
 #include <iostream>
 
 #ifdef LIBDIVIDE_USE_SSE2
@@ -103,7 +104,7 @@ private:
         
         
     }
-    
+#ifndef __ARM_EABI__
     void test_four(const T *numers, T denom, const divider<T> & the_divider) {
         if (sizeof(T) == 4) {
 #if LIBDIVIDE_VC
@@ -150,6 +151,10 @@ private:
             }
         }
     }
+#else
+    void test_four(const T *numers, T denom, const divider<T> & the_divider) {
+    }
+#endif  /* __ARM_ARCH__ */
     
     void test_many(T denom) {
         const divider<T> the_divider = divider<T>(denom);

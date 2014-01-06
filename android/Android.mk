@@ -10,3 +10,10 @@ LOCAL_MODULE := benchmark
 # Needed for platforms which support hardware integer divide
 LOCAL_CFLAGS += -mcpu=cortex-a15 -DARM_SUPPORT_IDIV
 include $(BUILD_EXECUTABLE)
+
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := $(SRC)/libdivide_test.cpp
+LOCAL_MODULE := tester
+# Needed for platforms which support hardware integer divide
+LOCAL_CFLAGS += -mcpu=cortex-a15 -DARM_SUPPORT_IDIV
+include $(BUILD_EXECUTABLE)
