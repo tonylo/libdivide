@@ -184,7 +184,17 @@ static uint64_t mine_u32_unswitched(struct FunctionParams_t *params) {
  
     return sum;
 }
- 
+
+#if defined(__ANDROID__) && defined(ARM_SUPPORT_IDIV)
+static int32_t do_udiv(int32_t a, int32_t b) {
+  __asm__ __volatile__(
+      "udiv %[result], %[a], %[b]\n\t"
+      : [result] "=&r"(a)
+      : [a] "r" (a), [b] "r" (b));
+  return a;
+}
+#endif
+
 NOINLINE
 static uint64_t his_u32(struct FunctionParams_t *params) {
     unsigned iter;
@@ -193,7 +203,11 @@ static uint64_t his_u32(struct FunctionParams_t *params) {
     uint32_t sum = 0;
     for (iter = 0; iter < ITERATIONS; iter++) {
         uint32_t numer = data[iter];
+#if defined(__ANDROID__) && defined(ARM_SUPPORT_IDIV)
+        sum += do_udiv(numer, d);
+#else
         sum += numer / d;
+#endif
     }
     return sum;
 }
@@ -324,6 +338,16 @@ static uint64_t mine_s32_unswitched(struct FunctionParams_t *params) {
     return (uint64_t)sum;
 }
 
+#if defined(__ANDROID__) && defined(ARM_SUPPORT_IDIV)
+static int32_t do_sdiv(int32_t a, int32_t b) {
+  __asm__ __volatile__(
+      "sdiv %[result], %[a], %[b]\n\t"
+      : [result] "=&r"(a)
+      : [a] "r" (a), [b] "r" (b));
+  return a;
+}
+#endif
+
 NOINLINE
 static uint64_t his_s32(struct FunctionParams_t *params) {
     unsigned iter;
@@ -332,7 +356,11 @@ static uint64_t his_s32(struct FunctionParams_t *params) {
     const int32_t *data = (const int32_t *)params->data;
     for (iter = 0; iter < ITERATIONS; iter++) {
         int32_t numer = data[iter];
+#if defined(__ANDROID__) && defined(ARM_SUPPORT_IDIV)
+        sum += do_sdiv(numer, d);
+#else
         sum += numer / d;
+#endif
     }
     return sum;
 }
@@ -787,7 +815,12 @@ static const uint32_t *random_data(unsigned multiple) {
 #else
     /* Linux doesn't always give us data sufficiently aligned for SSE, so we can't use malloc(). */
     void *ptr = NULL;
-    posix_memalign(&ptr, 16, multiple * ITERATIONS * sizeof(uint32_t));
+    size_t sz = multiple * ITERATIONS * sizeof(uint32_t);
+#if !defined(__ANDROID__)
+    posix_memalign(&ptr, 16, sz);
+#else
+    ptr = memalign(16, sz);
+#endif
     uint32_t *data = ptr;
 #endif
     uint32_t i;
